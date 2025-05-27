@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="text-center">添加新电影</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">电影名称</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="director" class="form-label">导演</label>
+                        <input type="text" class="form-control" id="director" name="director" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="actors" class="form-label">主演</label>
+                        <input type="text" class="form-control" id="actors" name="actors" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="year" class="form-label">上映年份</label>
+                        <input type="number" class="form-control" id="year" name="year" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">分类</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="动作">动作</option>
+                            <option value="喜剧">喜剧</option>
+                            <option value="剧情">剧情</option>
+                            <option value="科幻">科幻</option>
+                            <option value="恐怖">恐怖</option>
+                            <option value="爱情">爱情</option>
+                            <option value="动画">动画</option>
+                            <option value="纪录片">纪录片</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">剧情简介</label>
+                        <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="poster" class="form-label">电影海报</label>
+                        <input type="file" class="form-control" id="poster" name="poster" accept="image/*">
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">添加电影</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
