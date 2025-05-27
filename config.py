@@ -7,6 +7,7 @@ load_dotenv(os.path.join(basedir, '.env'))
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-secret-key'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    ITEMS_PER_PAGE = 10  # 每页显示的项目数量
     
     @staticmethod
     def init_app(app):

@@ -26,17 +26,34 @@
                         <input type="number" class="form-control" id="year" name="year" required>
                     </div>
                     <div class="mb-3">
-                        <label for="category" class="form-label">分类</label>
-                        <select class="form-select" id="category" name="category" required>
-                            <option value="动作">动作</option>
-                            <option value="喜剧">喜剧</option>
-                            <option value="剧情">剧情</option>
-                            <option value="科幻">科幻</option>
-                            <option value="恐怖">恐怖</option>
-                            <option value="爱情">爱情</option>
-                            <option value="动画">动画</option>
-                            <option value="纪录片">纪录片</option>
-                        </select>
+                        <label for="country" class="form-label">国家/地区</label>
+                        <input type="text" class="form-control" id="country" name="country">
+                    </div>
+                    <div class="mb-3">
+                        <label for="duration" class="form-label">片长(分钟)</label>
+                        <input type="text" class="form-control" id="duration" name="duration">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">电影类型</label>
+                        <div class="row">
+                            {% for genre in all_genres %}
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="genres" value="{{ genre.name }}"
+                                        id="genre_{{ genre.id }}">
+                                    <label class="form-check-label" for="genre_{{ genre.id }}">
+                                        {{ genre.name }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-2">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="new_genre" placeholder="添加新类型">
+                                <button class="btn btn-outline-secondary" type="button" onclick="addNewGenre()">添加</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="description" class="form-label">剧情简介</label>
@@ -54,4 +71,49 @@
         </div>
     </div>
 </div>
+
+<script>
+function addNewGenre() {
+    const newGenre = document.getElementById('new_genre').value.trim();
+    if (!newGenre) return;
+    
+    // 检查是否已存在该类型
+    const existingGenres = document.querySelectorAll('.form-check-label');
+    for (let i = 0; i < existingGenres.length; i++) {
+        if (existingGenres[i].textContent.trim() === newGenre) {
+            alert('该类型已存在！');
+            return;
+        }
+    }
+    
+    // 创建新的类型选项
+    const genreContainer = document.querySelector('.row');
+    const colDiv = document.createElement('div');
+    colDiv.className = 'col-md-3';
+    
+    const formCheck = document.createElement('div');
+    formCheck.className = 'form-check';
+    
+    const input = document.createElement('input');
+    input.className = 'form-check-input';
+    input.type = 'checkbox';
+    input.name = 'genres';
+    input.value = newGenre;
+    input.id = 'genre_new_' + Date.now();
+    input.checked = true;
+    
+    const label = document.createElement('label');
+    label.className = 'form-check-label';
+    label.htmlFor = input.id;
+    label.textContent = newGenre;
+    
+    formCheck.appendChild(input);
+    formCheck.appendChild(label);
+    colDiv.appendChild(formCheck);
+    genreContainer.appendChild(colDiv);
+    
+    // 清空输入框
+    document.getElementById('new_genre').value = '';
+}
+</script>
 {% endblock %}

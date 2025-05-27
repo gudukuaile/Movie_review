@@ -1,0 +1,55 @@
+{% extends "admin/dashboard.html" %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">编辑用户</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('admin.edit_user', id=user.id) }}">
+            <div class="mb-3">
+                <label class="form-label">用户名</label>
+                <input type="text" class="form-control" value="{{ user.username }}" readonly>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">邮箱</label>
+                <input type="email" class="form-control" value="{{ user.email }}" readonly>
+            </div>
+            <div class="mb-3">
+                <label for="role" class="form-label">角色</label>
+                <select class="form-select" id="role" name="role">
+                    {% for role in roles %}
+                    <option value="{{ role.id }}" {% if role.id == user.role_id %}selected{% endif %}>
+                        {{ role.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">
+                    <ul class="mt-2">
+                        <li><strong>User</strong>: 只能评论电影</li>
+                        <li><strong>Editor</strong>: 可以评论、添加和编辑电影</li>
+                        <li><strong>Admin</strong>: 拥有所有权限，包括删除电影和管理用户</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">注册时间</label>
+                <input type="text" class="form-control" value="{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}" readonly>
+            </div>
+            <div class="mb-3">
+                <label for="reset_password" class="form-label">重置密码 (留空表示不修改)</label>
+                <input type="password" class="form-control" id="reset_password" name="reset_password">
+                <div class="form-text">如果需要重置用户密码，请在此输入新密码</div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 保存更改
+                </button>
+                <a href="{{ url_for('admin.manage_users') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回用户列表
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

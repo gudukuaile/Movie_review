@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3>个人资料</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">邮箱</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="avatar" class="form-label">头像URL</label>
+                            <input type="text" class="form-control" id="avatar" name="avatar" value="{{ current_user.avatar }}">
+                            {% if current_user.avatar %}
+                            <div class="mt-2">
+                                <img src="{{ current_user.avatar }}" alt="头像" class="img-thumbnail" style="max-width: 100px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">电话号码</label>
+                            <input type="text" class="form-control" id="phone" name="phone" value="{{ current_user.phone }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="bio" class="form-label">个人简介</label>
+                            <textarea class="form-control" id="bio" name="bio" rows="3">{{ current_user.bio }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">新密码 (留空表示不修改)</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                        </div>
+                        <button type="submit" class="btn btn-primary">保存修改</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,4 +1,4 @@
-from flask import render_template, request
+from flask import render_template, request, current_app
 from . import main
 from ..models import Movie, Genre
 from flask_sqlalchemy import SQLAlchemy
@@ -22,7 +22,7 @@ def index():
         query = query.join(Movie.genres).join(Genre).filter(Genre.name == category)
     
     # 分页
-    pagination = query.paginate(page=page, per_page=12, error_out=False)
+    pagination = query.paginate(page=page, per_page=current_app.config['ITEMS_PER_PAGE'], error_out=False)
     movies = pagination.items
     
     # 获取所有类型用于筛选

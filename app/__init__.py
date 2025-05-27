@@ -37,5 +37,31 @@ def create_app(config_name='default'):
 
     from .movie import movie as movie_blueprint
     app.register_blueprint(movie_blueprint, url_prefix='/movie')
+    
+    from .admin import admin as admin_blueprint
+    app.register_blueprint(admin_blueprint, url_prefix='/admin')
+    
+    # 初始化角色和创建管理员账号
+    with app.app_context():
+        from .models import Role, User, Permission
+        db.create_all()
+        Role.insert_roles()
+        
+        # 创建默认管理员账号
+        admin_user = User.query.filter_by(email='admin@example.com').first()
+        if admin_user is None:
+            admin_user = User(
+                username='admin',
+                email='admin@example.com',
+                role=Role.query.filter_by(name='Admin').first()
+            )
+            admin_user.set_password('admin123')
+            db.session.add(admin_user)
+            db.session.commit()
+    
+    # 将Permission类添加到模板上下文中
+    @app.context_processor
+    def inject_permissions():
+        return dict(Permission=Permission)
 
     return app

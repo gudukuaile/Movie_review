@@ -3,49 +3,83 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import os
 from . import movie
-from ..models import Movie, Review, Genre, MovieGenre
+from ..models import Movie, Review, Genre, MovieGenre, Permission
 from .. import db
+from functools import wraps
+
+def permission_required(permission):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not current_user.can(permission):
+                flash('您没有权限执行此操作。', 'error')
+                return redirect(url_for('main.index'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
 @movie.route('/<int:id>')
 def detail(id):
     movie = Movie.query.get_or_404(id)
-    return render_template('movie/detail.html', movie=movie)
+    # 获取未删除的评论
+    reviews = Review.query.filter_by(movie_id=id).order_by(Review.created_at.desc()).all()
+    return render_template('movie/detail.html', movie=movie, reviews=reviews)
 
 @movie.route('/add', methods=['GET', 'POST'])
 @login_required
+@permission_required(Permission.MOVIE_EDIT)
 def add():
     if request.method == 'POST':
         title = request.form['title']
         director = request.form['director']
         actors = request.form['actors']
         year = request.form['year']
+        country = request.form.get('country', '')
+        duration = request.form.get('duration', '')
         description = request.form['description']
-        category = request.form['category']
         
         poster = request.files['poster']
-        if poster:
+        if poster and poster.filename:
             filename = secure_filename(poster.filename)
             poster.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
             poster_path = f'uploads/{filename}'
         else:
             poster_path = 'default.jpg'
         
+        # 创建新电影
         movie = Movie(
             title=title,
             director=director,
             actors=actors,
             year=year,
-            quote=description,  # 保存到quote字段，与模型一致
-            genre=category,     # 保存到genre字段，与模型一致
-            img_src=poster_path # 保存到img_src字段，与模板一致
+            country=country,
+            duration=duration,
+            quote=description,
+            img_src=poster_path
         )
         
         db.session.add(movie)
         db.session.commit()
-        flash('电影添加成功！')
-        return redirect(url_for('main.index'))
+        
+        # 处理电影类型
+        genres = request.form.getlist('genres')
+        for genre_name in genres:
+            genre = Genre.query.filter_by(name=genre_name).first()
+            if not genre:
+                genre = Genre(name=genre_name)
+                db.session.add(genre)
+                db.session.commit()
+            
+            movie_genre = MovieGenre(movie_id=movie.id, genre_id=genre.id)
+            db.session.add(movie_genre)
+        
+        db.session.commit()
+        flash('电影添加成功！', 'success')
+        return redirect(url_for('movie.detail', id=movie.id))
     
-    return render_template('movie/add.html')
+    # 获取所有可用的电影类型
+    all_genres = Genre.query.all()
+    return render_template('movie/add.html', all_genres=all_genres)
 
 @movie.route('/<int:id>/review', methods=['POST'])
 @login_required
@@ -63,11 +97,12 @@ def add_review(id):
     
     db.session.add(review)
     db.session.commit()
-    flash('评价提交成功！')
+    flash('评价提交成功！', 'success')
     return redirect(url_for('movie.detail', id=id))
 
 @movie.route('/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
+@permission_required(Permission.MOVIE_EDIT)
 def edit_movie(id):
     movie = Movie.query.get_or_404(id)
     if request.method == 'POST':
@@ -91,7 +126,9 @@ def edit_movie(id):
             if not genre:
                 genre = Genre(name=genre_name)
                 db.session.add(genre)
-            movie_genre = MovieGenre(movie=movie, genre=genre)
+                db.session.commit()
+            
+            movie_genre = MovieGenre(movie_id=movie.id, genre_id=genre.id)
             db.session.add(movie_genre)
         
         try:
@@ -107,3 +144,13 @@ def edit_movie(id):
     return render_template('movie/edit_movie.html', 
                          movie=movie, 
                          all_genres=all_genres)
+
+@movie.route('/delete/<int:id>')
+@login_required
+@permission_required(Permission.MOVIE_DELETE)
+def delete_movie(id):
+    movie = Movie.query.get_or_404(id)
+    db.session.delete(movie)
+    db.session.commit()
+    flash('电影已删除。', 'success')
+    return redirect(url_for('main.index'))

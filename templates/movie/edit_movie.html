@@ -44,13 +44,20 @@
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="genres" value="{{ genre.name }}"
                                     id="genre_{{ genre.id }}"
-                                    {% if genre in movie.genres %}checked{% endif %}>
+                                    {% if genre.name in movie.genres|map(attribute='genre.name')|list %}checked{% endif %}>
                                 <label class="form-check-label" for="genre_{{ genre.id }}">
                                     {{ genre.name }}
                                 </label>
                             </div>
                         </div>
                         {% endfor %}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="new_genre" class="form-label">添加新类型</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="new_genre" name="new_genre" placeholder="输入新类型名称">
+                        <button class="btn btn-outline-secondary" type="button" onclick="addNewGenre()">添加</button>
                     </div>
                 </div>
             </div>
@@ -65,4 +72,49 @@
         </div>
     </form>
 </div>
+
+<script>
+function addNewGenre() {
+    const newGenre = document.getElementById('new_genre').value.trim();
+    if (!newGenre) return;
+    
+    // 检查是否已存在该类型
+    const existingGenres = document.querySelectorAll('.form-check-label');
+    for (let i = 0; i < existingGenres.length; i++) {
+        if (existingGenres[i].textContent.trim() === newGenre) {
+            alert('该类型已存在！');
+            return;
+        }
+    }
+    
+    // 创建新的类型选项
+    const genreContainer = document.querySelector('.row');
+    const colDiv = document.createElement('div');
+    colDiv.className = 'col-md-4';
+    
+    const formCheck = document.createElement('div');
+    formCheck.className = 'form-check';
+    
+    const input = document.createElement('input');
+    input.className = 'form-check-input';
+    input.type = 'checkbox';
+    input.name = 'genres';
+    input.value = newGenre;
+    input.id = 'genre_new_' + Date.now();
+    input.checked = true;
+    
+    const label = document.createElement('label');
+    label.className = 'form-check-label';
+    label.htmlFor = input.id;
+    label.textContent = newGenre;
+    
+    formCheck.appendChild(input);
+    formCheck.appendChild(label);
+    colDiv.appendChild(formCheck);
+    genreContainer.appendChild(colDiv);
+    
+    // 清空输入框
+    document.getElementById('new_genre').value = '';
+}
+</script>
 {% endblock %} 
