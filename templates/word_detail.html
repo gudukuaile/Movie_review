@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        {% if word.img_src and word.img_src.startswith('http') %}
+            <img src="{{ word.img_src }}" class="img-fluid rounded" alt="{{ word.title }}">
+        {% elif word.img_src %}
+            <img src="{{ request.url_for('static', path=word.img_src) }}" class="img-fluid rounded" alt="{{ word.title }}">
+        {% else %}
+            <div class="d-flex justify-content-center align-items-center bg-light rounded" style="height: 400px;">
+                <span class="text-muted">暂无图片</span>
+            </div>
+        {% endif %}
+    </div>
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-start">
+            <h1>{{ word.title }}</h1>
+            <div>
+                {% if current_user.is_authenticated and current_user.can(Permission.MOVIE_EDIT) %}
+                <a href="#_edit_word_placeholder_{{ word.id }}" class="btn btn-outline-primary">编辑信息</a>
+                {% endif %}
+
+                {% if current_user.is_authenticated and current_user.can(Permission.MOVIE_DELETE) %}
+                <button type="button" class="btn btn-outline-danger" onclick="confirmDelete('{{ word.id }}', '{{ word.title }}')">
+                    删除电影
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Movie specific fields removed. Display categories and rating from word object if available -->
+        <p class="text-muted">
+            Categories:
+            {% for category_assoc in word.categories_association %}
+                {{ category_assoc.category.name }}{% if not loop.last %}, {% endif %}
+            {% else %}
+                N/A
+            {% endfor %}
+        </p>
+        {% if word.quote %}
+        <div class="mt-4">
+            <h4>简介</h4>
+            <p>{{ word.quote }}</p>
+        </div>
+        {% endif %}
+        {% if word.rating is not none %}
+        <div class="mt-4">
+            <h4>评分信息</h4>
+            <p>评分：{{ word.rating }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-5">
+    <h3>用户评价</h3>
+    {% if current_user.is_authenticated %}
+    <form method="POST" action="/api/v1/words/{{ word.id }}/reviews/" class="mb-4">
+        <div class="mb-3">
+            <label for="rating" class="form-label">评分</label>
+            <select class="form-select" id="rating" name="rating" required>
+                <option value="1">1星</option>
+                <option value="2">2星</option>
+                <option value="3">3星</option>
+                <option value="4">4星</option>
+                <option value="5">5星</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="content" class="form-label">评价内容</label>
+            <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">提交评价</button>
+    </form>
+    {% else %}
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle"></i> 登录后即可发表您的评价。
+        <a href="{{ request.url_for('login_page', next=request.path) }}" class="alert-link">立即登录</a> 或
+        <a href="{{ request.url_for('register_page') }}" class="alert-link">注册账号</a>
+    </div>
+    {% endif %}
+
+    <div class="reviews">
+        {% for review in reviews %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{ review.author.username }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">评分：{{ review.rating }}星</h6>
+                <p class="card-text">{{ review.content }}</p>
+                <small class="text-muted">{{ review.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not reviews %}
+        <div class="alert alert-light text-center">
+            <p>暂无评价</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 删除确认模态框 -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">确认删除</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                确定要删除电影 "<span id="movieTitle"></span>" 吗？此操作不可撤销。
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <a id="deleteLink" href="#" class="btn btn-danger">确认删除</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(wordId, wordTitle) {
+    document.getElementById('movieTitle').textContent = wordTitle; // Keep movieTitle ID for now or update modal HTML
+    document.getElementById('deleteLink').href = "#_delete_word_placeholder_" + wordId; // Placeholder
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+</script>
+{% endblock %}
