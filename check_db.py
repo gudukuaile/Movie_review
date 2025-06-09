@@ -5,31 +5,50 @@ def check_database():
     conn = sqlite3.connect('data-dev.sqlite')
     cursor = conn.cursor()
     
-    # 获取所有表名
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = cursor.fetchall()
-    print("数据库中的表：")
-    for table in tables:
-        print(f"\n表名: {table[0]}")
-        # 获取表结构
-        cursor.execute(f"PRAGMA table_info({table[0]});")
-        columns = cursor.fetchall()
-        print("列信息：")
-        for col in columns:
-            print(f"  {col[1]} ({col[2]})")
-        
-        # 获取记录数
-        cursor.execute(f"SELECT COUNT(*) FROM {table[0]};")
-        count = cursor.fetchone()[0]
-        print(f"记录数: {count}")
-        
-        # 如果是movies表，显示一些示例数据
-        if table[0] == 'movies':
-            cursor.execute("SELECT id, title, rating FROM movies LIMIT 5;")
-            movies = cursor.fetchall()
-            print("\n示例电影数据：")
-            for movie in movies:
-                print(f"  ID: {movie[0]}, 标题: {movie[1]}, 评分: {movie[2]}")
+    # 检查电影表
+    print("\n=== 电影表数据 ===")
+    cursor.execute("SELECT COUNT(*) FROM movies;")
+    movie_count = cursor.fetchone()[0]
+    print(f"电影总数: {movie_count}")
+    
+    # 检查分类表
+    print("\n=== 分类表数据 ===")
+    cursor.execute("SELECT * FROM genres;")
+    genres = cursor.fetchall()
+    print(f"分类总数: {len(genres)}")
+    for genre in genres:
+        print(f"分类ID: {genre[0]}, 名称: {genre[1]}")
+    
+    # 检查电影-分类关联表
+    print("\n=== 电影-分类关联数据 ===")
+    cursor.execute("SELECT COUNT(*) FROM movie_genres;")
+    relation_count = cursor.fetchone()[0]
+    print(f"关联关系总数: {relation_count}")
+    
+    # 检查每个分类下的电影数量
+    print("\n=== 每个分类下的电影数量 ===")
+    cursor.execute("""
+        SELECT g.name, COUNT(mg.movie_id) 
+        FROM genres g 
+        LEFT JOIN movie_genres mg ON g.id = mg.genre_id 
+        GROUP BY g.id, g.name;
+    """)
+    genre_counts = cursor.fetchall()
+    for genre_name, count in genre_counts:
+        print(f"分类 '{genre_name}' 下的电影数量: {count}")
+    
+    # 检查一些具体的关联数据
+    print("\n=== 示例关联数据 ===")
+    cursor.execute("""
+        SELECT m.title, g.name 
+        FROM movies m 
+        JOIN movie_genres mg ON m.id = mg.movie_id 
+        JOIN genres g ON g.id = mg.genre_id 
+        LIMIT 5;
+    """)
+    examples = cursor.fetchall()
+    for movie_title, genre_name in examples:
+        print(f"电影 '{movie_title}' 属于分类 '{genre_name}'")
 
     conn.close()
 

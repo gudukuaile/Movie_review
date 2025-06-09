@@ -36,5 +36,5 @@ class Movie(Base):
     duration = Column(String(20))
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    genres = relationship('MovieGenre', back_populates='movie')
-    reviews = relationship('Review', back_populates='movie')
+    genres = relationship('MovieGenre', back_populates='movie', lazy='joined')
+    reviews = relationship('Review', back_populates='movie', lazy='dynamic')

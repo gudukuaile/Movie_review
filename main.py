@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from apps.main import router as main_router
+from apps.home import router as home_router
+from apps.movie import router as movie_router
 from models import Base, engine
 
 # 创建数据库表
@@ -22,4 +23,5 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # 注册路由
-app.include_router(main_router)
+app.include_router(home_router)
+app.include_router(movie_router)
