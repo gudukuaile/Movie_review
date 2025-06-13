@@ -1,6 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if request.query_params.get('review_success') %}
+<div class="alert alert-success">评论提交成功！</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
 <style>
     .movie-poster {
         width: 100%;
@@ -92,6 +98,25 @@
                     <h5 class="mb-0">评论区</h5>
                 </div>
                 <div class="card-body">
+                    {% if current_user %}
+                    <form method="post" action="/movie/{{ movie.id }}/review">
+                        <div class="mb-3">
+                            <label for="content" class="form-label">评论内容</label>
+                            <textarea class="form-control" id="content" name="content" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">评分</label>
+                            <select class="form-select" id="rating" name="rating" required>
+                                <option value="">请选择评分</option>
+                                {% for i in range(1, 6) %}
+                                <option value="{{ i }}">{{ i }} 星</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">提交评论</button>
+                    </form>
+                    <hr>
+                    {% endif %}
                     {% if reviews %}
                         {% for review in reviews %}
                             <div class="review-item mb-3 pb-3 border-bottom">

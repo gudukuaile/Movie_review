@@ -2,6 +2,12 @@
 
 {% block content %}
 <div class="container">
+    {% if request.query_params.get('success') %}
+    <div class="alert alert-success">个人资料已更新！</div>
+    {% endif %}
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
     <div class="row">
         <div class="col-md-8 offset-md-2">
             <div class="card">
@@ -12,15 +18,15 @@
                     <form method="POST" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label for="username" class="form-label">用户名</label>
-                            <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" required>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username or '' }}" required>
                         </div>
                         <div class="mb-3">
                             <label for="email" class="form-label">邮箱</label>
-                            <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email or '' }}" required>
                         </div>
                         <div class="mb-3">
                             <label for="avatar" class="form-label">头像URL</label>
-                            <input type="text" class="form-control" id="avatar" name="avatar" value="{{ current_user.avatar }}">
+                            <input type="text" class="form-control" id="avatar" name="avatar" value="{{ current_user.avatar or '' }}">
                             {% if current_user.avatar %}
                             <div class="mt-2">
                                 <img src="{{ current_user.avatar }}" alt="头像" class="img-thumbnail" style="max-width: 100px;">
@@ -29,11 +35,11 @@
                         </div>
                         <div class="mb-3">
                             <label for="phone" class="form-label">电话号码</label>
-                            <input type="text" class="form-control" id="phone" name="phone" value="{{ current_user.phone }}">
+                            <input type="text" class="form-control" id="phone" name="phone" value="{{ current_user.phone or '' }}">
                         </div>
                         <div class="mb-3">
                             <label for="bio" class="form-label">个人简介</label>
-                            <textarea class="form-control" id="bio" name="bio" rows="3">{{ current_user.bio }}</textarea>
+                            <textarea class="form-control" id="bio" name="bio" rows="3">{{ current_user.bio or '' }}</textarea>
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label">新密码 (留空表示不修改)</label>
