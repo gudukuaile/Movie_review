@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Form, Query
+from fastapi import APIRouter, Depends, Request, Form, Query, UploadFile, File
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -6,9 +6,24 @@ from models import get_db, User, Movie, Review, MovieGenre, Genre
 from apps.auth.router import get_current_user
 from models.role_models import Permission, Role
 from utils.pagination import Pagination
+import os
+import shutil
+from pathlib import Path
+from datetime import datetime
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates", extensions=["jinja2.ext.do"])
+
+# 头像上传配置
+AVATAR_UPLOAD_DIR = "static/uploads/avatars"
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"}
+MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
+
+# 确保上传目录存在
+os.makedirs(AVATAR_UPLOAD_DIR, exist_ok=True)
+
+def allowed_file(filename):
+    return Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
 
 @router.get("/admin/dashboard", name="dashboard")
 async def dashboard(request: Request, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
@@ -76,6 +91,7 @@ async def edit_user(
     request: Request,
     role_id: int = Form(None),
     reset_password: str = Form(None),
+    avatar: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
@@ -91,6 +107,31 @@ async def edit_user(
             if reset_password:
                 from utils.security import generate_password_hash
                 user.password_hash = generate_password_hash(reset_password)
+            
+            # 处理头像上传
+            if avatar and avatar.filename:
+                if not allowed_file(avatar.filename):
+                    request.session["message"] = "不支持的文件格式，请上传jpg、png或gif格式的图片"
+                    request.session["message_type"] = "danger"
+                    return RedirectResponse(url=f"/admin/user/{id}/edit", status_code=303)
+                
+                # 生成唯一的文件名
+                file_ext = Path(avatar.filename).suffix
+                new_filename = f"{user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}{file_ext}"
+                file_path = os.path.join(AVATAR_UPLOAD_DIR, new_filename)
+                
+                try:
+                    # 保存文件
+                    with open(file_path, "wb") as buffer:
+                        shutil.copyfileobj(avatar.file, buffer)
+                    
+                    # 更新用户头像URL
+                    user.avatar = f"/static/uploads/avatars/{new_filename}"
+                except Exception as e:
+                    request.session["message"] = "头像上传失败，请重试"
+                    request.session["message_type"] = "danger"
+                    return RedirectResponse(url=f"/admin/user/{id}/edit", status_code=303)
+            
             db.commit()
             request.session["message"] = "用户更新成功！"
             request.session["message_type"] = "success"

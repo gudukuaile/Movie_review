@@ -13,6 +13,21 @@
             max-width: 100%;
             height: auto;
         }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            object-fit: cover;
+        }
+        .user-avatar-placeholder {
+            width: 32px;
+            height: 32px;
+            background-color: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
     </style>
 </head>
 <body>
@@ -43,8 +58,15 @@
                 <ul class="navbar-nav">
                     {% if current_user %}
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" 
                            data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if current_user.avatar %}
+                            <img src="{{ current_user.avatar }}" alt="头像" class="user-avatar rounded-circle me-2">
+                            {% else %}
+                            <div class="user-avatar-placeholder me-2">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            {% endif %}
                             {{ current_user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">

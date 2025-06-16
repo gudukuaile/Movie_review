@@ -11,6 +11,7 @@
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>头像</th>
                         <th>用户名</th>
                         <th>邮箱</th>
                         <th>角色</th>
@@ -22,6 +23,15 @@
                     {% for user in users %}
                     <tr>
                         <td>{{ user.id }}</td>
+                        <td>
+                            {% if user.avatar %}
+                            <img src="{{ user.avatar }}" alt="头像" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            {% endif %}
+                        </td>
                         <td>{{ user.username }}</td>
                         <td>{{ user.email }}</td>
                         <td>

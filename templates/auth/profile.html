@@ -25,13 +25,14 @@
                             <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email or '' }}" required>
                         </div>
                         <div class="mb-3">
-                            <label for="avatar" class="form-label">头像URL</label>
-                            <input type="text" class="form-control" id="avatar" name="avatar" value="{{ current_user.avatar or '' }}">
+                            <label for="avatar" class="form-label">头像</label>
+                            <input type="file" class="form-control" id="avatar" name="avatar" accept="image/*">
                             {% if current_user.avatar %}
                             <div class="mt-2">
                                 <img src="{{ current_user.avatar }}" alt="头像" class="img-thumbnail" style="max-width: 100px;">
                             </div>
                             {% endif %}
+                            <div class="form-text">支持jpg、png、gif格式的图片，大小不超过2MB</div>
                         </div>
                         <div class="mb-3">
                             <label for="phone" class="form-label">电话号码</label>

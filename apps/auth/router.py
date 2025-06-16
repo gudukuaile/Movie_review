@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, HTTPException, Form, Cookie
+from fastapi import APIRouter, Depends, Request, HTTPException, Form, Cookie, UploadFile, File
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -10,6 +10,9 @@ from jose import JWTError, jwt
 from typing import Optional
 import logging
 from models.role_models import Role, Permission
+import os
+import shutil
+from pathlib import Path
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +25,17 @@ templates = Jinja2Templates(directory="templates", extensions=["jinja2.ext.do"])
 SECRET_KEY = "your-secret-key"  # 在生产环境中应该使用环境变量
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# 头像上传配置
+AVATAR_UPLOAD_DIR = "static/uploads/avatars"
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"}
+MAX_FILE_SIZE = 2 * 1024 * 1024  # 2MB
+
+# 确保上传目录存在
+os.makedirs(AVATAR_UPLOAD_DIR, exist_ok=True)
+
+def allowed_file(filename):
+    return Path(filename).suffix.lower() in ALLOWED_EXTENSIONS
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -190,16 +204,17 @@ async def profile_update(
     request: Request,
     username: str = Form(...),
     email: str = Form(...),
-    avatar: str = Form(""),
     phone: str = Form(""),
     bio: str = Form(""),
     password: str = Form(""),
     confirm_password: str = Form(""),
+    avatar: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user)
 ):
     if not current_user:
         return RedirectResponse(url="/auth/login", status_code=303)
+    
     # 检查用户名和邮箱唯一性
     if username != current_user.username and db.query(User).filter(User.username == username).first():
         return templates.TemplateResponse(
@@ -221,12 +236,50 @@ async def profile_update(
                 "error": "邮箱已被使用"
             }
         )
+    
+    # 处理头像上传
+    if avatar and avatar.filename:
+        if not allowed_file(avatar.filename):
+            return templates.TemplateResponse(
+                "auth/profile.html",
+                {
+                    "request": request,
+                    "current_user": current_user,
+                    "Permission": Permission,
+                    "error": "不支持的文件格式，请上传jpg、png或gif格式的图片"
+                }
+            )
+        
+        # 生成唯一的文件名
+        file_ext = Path(avatar.filename).suffix
+        new_filename = f"{current_user.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}{file_ext}"
+        file_path = os.path.join(AVATAR_UPLOAD_DIR, new_filename)
+        
+        try:
+            # 保存文件
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(avatar.file, buffer)
+            
+            # 更新用户头像URL
+            current_user.avatar = f"/static/uploads/avatars/{new_filename}"
+        except Exception as e:
+            logger.error(f"头像上传失败: {str(e)}")
+            return templates.TemplateResponse(
+                "auth/profile.html",
+                {
+                    "request": request,
+                    "current_user": current_user,
+                    "Permission": Permission,
+                    "error": "头像上传失败，请重试"
+                }
+            )
+    
     # 更新用户信息
     current_user.username = username
     current_user.email = email
-    current_user.avatar = avatar
     current_user.phone = phone
     current_user.bio = bio
+    
     # 密码修改
     if password:
         if password != confirm_password:
@@ -240,5 +293,6 @@ async def profile_update(
                 }
             )
         current_user.password_hash = generate_password_hash(password)
+    
     db.commit()
-    return RedirectResponse(url="/?profile_updated=1", status_code=303) 
+    return RedirectResponse(url="/auth/profile?success=1", status_code=303) 
