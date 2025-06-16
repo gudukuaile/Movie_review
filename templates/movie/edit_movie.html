@@ -68,7 +68,7 @@
         </div>
         <div class="mb-3">
             <button type="submit" class="btn btn-primary">保存修改</button>
-            <a href="{{ url_for('movie.detail', id=movie.id) }}" class="btn btn-secondary">取消</a>
+            <a href="{{ request.url_for('movie_detail', movie_id=movie.id) }}" class="btn btn-secondary">取消</a>
         </div>
     </form>
 </div>

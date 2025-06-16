@@ -1,69 +1,147 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-4">
-        {% if movie.img_src and movie.img_src.startswith('http') %}
-            <img src="{{ movie.img_src }}" class="img-fluid rounded" alt="{{ movie.title }}">
-        {% elif movie.img_src %}
-            <img src="{{ url_for('static', filename=movie.img_src) }}" class="img-fluid rounded" alt="{{ movie.title }}">
-        {% else %}
-            <div class="d-flex justify-content-center align-items-center bg-light rounded" style="height: 300px;">
-                <span class="text-muted">暂无图片</span>
-            </div>
-        {% endif %}
-    </div>
-    <div class="col-md-8">
-        <h1>{{ movie.title }}</h1>
-        <p class="text-muted">{{ movie.year }} | {{ movie.genre }}</p>
-        <h5>导演：{{ movie.director }}</h5>
-        <h5>主演：{{ movie.actors }}</h5>
-        <h5>国家：{{ movie.country }}</h5>
-        <h5>片长：{{ movie.duration }}</h5>
-        <div class="mt-4">
-            <h4>简介</h4>
-            <p>{{ movie.quote }}</p>
-        </div>
-        <div class="mt-4">
-            <h4>评分信息</h4>
-            <p>评分：{{ movie.rating }}，评价人数：{{ movie.judge_num }}</p>
-        </div>
-    </div>
-</div>
+{% if request.query_params.get('review_success') %}
+<div class="alert alert-success">评论提交成功！</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+<style>
+    .movie-poster {
+        width: 100%;
+        height: 450px;
+        object-fit: cover;
+        object-position: center;
+    }
+    .movie-poster-container {
+        height: 450px;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
 
-<div class="mt-5">
-    <h3>用户评价</h3>
-    {% if current_user.is_authenticated %}
-    <form method="POST" action="{{ url_for('movie.add_review', id=movie.id) }}" class="mb-4">
-        <div class="mb-3">
-            <label for="rating" class="form-label">评分</label>
-            <select class="form-select" id="rating" name="rating" required>
-                <option value="1">1星</option>
-                <option value="2">2星</option>
-                <option value="3">3星</option>
-                <option value="4">4星</option>
-                <option value="5">5星</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="content" class="form-label">评价内容</label>
-            <textarea class="form-control" id="content" name="content" rows="3" required></textarea>
-        </div>
-        <button type="submit" class="btn btn-primary">提交评价</button>
-    </form>
-    {% endif %}
-
-    <div class="reviews">
-        {% for review in movie.reviews %}
-        <div class="card mb-3">
-            <div class="card-body">
-                <h5 class="card-title">{{ review.author.username }}</h5>
-                <h6 class="card-subtitle mb-2 text-muted">评分：{{ review.rating }}星</h6>
-                <p class="card-text">{{ review.content }}</p>
-                <small class="text-muted">{{ review.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+<div class="container">
+    <div class="row">
+        <!-- 电影基本信息 -->
+        <div class="col-md-4">
+            <div class="card">
+                {% if movie.img_src and movie.img_src.startswith('http') %}
+                    <img src="{{ movie.img_src }}" class="movie-poster" alt="{{ movie.title }}">
+                {% elif movie.img_src %}
+                    <img src="/static/{{ movie.img_src }}" class="movie-poster" alt="{{ movie.title }}">
+                {% else %}
+                    <div class="movie-poster-container">
+                        <span class="text-muted">暂无图片</span>
+                    </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ movie.title }}</h5>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            评分：{{ movie.rating }} | 评价人数：{{ movie.judge_num }}
+                        </small>
+                    </p>
+                </div>
             </div>
         </div>
-        {% endfor %}
+        
+        <!-- 电影详细信息 -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">电影信息</h5>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">导演：</div>
+                        <div class="col-md-9">{{ movie.director }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">主演：</div>
+                        <div class="col-md-9">{{ movie.actors }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">年份：</div>
+                        <div class="col-md-9">{{ movie.year }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">国家：</div>
+                        <div class="col-md-9">{{ movie.country }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">片长：</div>
+                        <div class="col-md-9">{{ movie.duration }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3 text-muted">类型：</div>
+                        <div class="col-md-9">
+                            {% for movie_genre in movie.genres %}
+                                <span class="badge bg-secondary me-1">{{ movie_genre.genre.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 text-muted">简介：</div>
+                        <div class="col-md-9">{{ movie.quote }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 评论区 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">评论区</h5>
+                </div>
+                <div class="card-body">
+                    {% if current_user %}
+                    <form method="post" action="/movie/{{ movie.id }}/review">
+                        <div class="mb-3">
+                            <label for="content" class="form-label">评论内容</label>
+                            <textarea class="form-control" id="content" name="content" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="rating" class="form-label">评分</label>
+                            <select class="form-select" id="rating" name="rating" required>
+                                <option value="">请选择评分</option>
+                                {% for i in range(1, 6) %}
+                                <option value="{{ i }}">{{ i }} 星</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">提交评论</button>
+                    </form>
+                    <hr>
+                    {% endif %}
+                    {% if reviews %}
+                        {% for review in reviews %}
+                            <div class="review-item mb-3 pb-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <strong>{{ review.author.username }}</strong>
+                                        <small class="text-muted ms-2">{{ review.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                    </div>
+                                    {% if review.rating %}
+                                        <div class="text-warning">
+                                            {% for _ in range(review.rating) %}
+                                                <i class="fas fa-star"></i>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <p class="mb-0">{{ review.content }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">暂无评论</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
